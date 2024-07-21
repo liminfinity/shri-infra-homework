@@ -85,7 +85,7 @@ jobs:
           echo "- Commits: ${{ github.event.head_commit.message }}" >> $ISSUE
           git log --pretty=oneline >> $ISSUE
           echo "- YC Docker: cr.yandex/${{secrets.CR_ID}}/app:${{ github.run_number }}" >> $ISSUE
-          gh issue create --title "Release ${{ github.run_number }}" --body-file $ISSUE --label "Release ${{ github.run_number }}"
+          gh issue create --title "Release ${{ github.run_number }}" --body-file $ISSUE --label "release_${{ github.run_number }}"
           rm $ISSUE
         env:
           ISSUE: issue.txt
