@@ -75,6 +75,9 @@ jobs:
         run: |
           git config --global user.email "${{ github.actor }}@users.noreply.github.com"
           git config --global user.name "${{ github.actor }}"
+      - name: Create label
+        run: |
+          gh label create "release ${{ github.run_number }}"
       - name: Create issue
         run: |
           touch $ISSUE
