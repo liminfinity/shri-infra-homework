@@ -69,16 +69,6 @@ jobs:
     steps:
       - name: Set current date
         run: echo "NOW=$(date +'%Y-%m-%d')" >> $GITHUB_ENV
-      - name: Fetch all tags
-        run: git fetch --tags
-      - name: Get previous tag
-        id: prev_tag
-        run: echo "PREV_TAG=$(git describe --tags --abbrev=0 HEAD^)" >> $GITHUB_ENV
-      - name: Get commit list
-        id: commit_list
-        run: |
-          git log ${{ env.PREV_TAG }}..HEAD --oneline > commits.txt
-          echo "COMMITS=$(cat commits.txt)" >> $GITHUB_ENV
       - name: Create release issue
         uses: dacbd/create-issue-action@v2
         with:
@@ -90,8 +80,7 @@ jobs:
             - Date: ${{ env.NOW }}
             - Author: ${{ github.actor }}
             - Version: ${{ github.run_number }}
-            - Commits: |
-              ${{ env.COMMITS }}
+            - Commits: ${{ github.event.head_commit.message }}
             - Docker Image: cr.yandex/${{ secrets.CR_ID }}/app:${{ github.run_number }}
   changelog_update:
     runs-on: ubuntu-latest
@@ -101,12 +90,22 @@ jobs:
         uses: actions/checkout@v4.1.7
         with:
           ref: release/${{ github.run_number }}
-      - name: Update CHANGELOG.md
+      - name: Update changelog
         run: |
-          echo '${{ github.run_number }}' | cat - CHANGELOG.md > temp.md && mv temp.md CHANGELOG.md
+          touch $TEMP
+          cat $CHANGELOG > $TEMP
+          touch $CHANGELOG
+          echo "## ${{ github.run_number }}" >> $CHANGELOG
+          git log --pretty=oneline >> $CHANGELOG
+          cat $TEMP >> $CHANGELOG
+          rm $TEMP
+          cat $CHANGELOG
           git add CHANGELOG.md
-          git commit -m "Update CHANGELOG.md"
-          git push origin release/${{ github.run_number }}
+          git commit -m "update changelog for ${{ github.run_number }}"
+          git push origin releases/${{ github.run_number }}
+        env:
+          CHANGELOG: CHANGELOG.md
+          TEMP: CHANGELOG_TEMP.md
   
       
     

@@ -74,16 +74,6 @@ jobs:
     steps:
       - name: Set current date
         run: echo "NOW=$(date +'%Y-%m-%d')" >> $GITHUB_ENV
-      - name: Fetch all tags
-        run: git fetch --tags
-      - name: Get previous tag
-        id: prev_tag
-        run: echo "PREV_TAG=$(git describe --tags --abbrev=0 HEAD^)" >> $GITHUB_ENV
-      - name: Get commit list
-        id: commit_list
-        run: |
-          git log ${{ env.PREV_TAG }}..HEAD --oneline > commits.txt
-          echo "COMMITS=$(cat commits.txt)" >> $GITHUB_ENV
       - name: Create comment
         uses: peter-evans/create-or-update-comment@v4
         with:
@@ -94,6 +84,5 @@ jobs:
             - Date: ${{env.NOW}}
             - Author: ${{ github.triggering_actor }}
             - Version: ${{ github.run_number }}
-            - Commits: |
-                ${{ env.COMMITS }}
+            - Commits: ${{ github.event.head_commit.message }}
             - YC Docker: cr.yandex/${{secrets.CR_ID}}/app:${{ inputs.version }}_fix${{ github.run_number }}
