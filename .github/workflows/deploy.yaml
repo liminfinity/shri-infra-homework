@@ -11,12 +11,6 @@ jobs:
   run_docker:
     runs-on: ubuntu-latest
     steps:
-      - name: Login to Yandex Container Registry
-        run: |
-            docker login \
-              --username oauth \
-              --password ${{ secrets.YANDEX_OAUTH }} \
-              cr.yandex
       - name: SSH and deploy to prod
         uses: appleboy/ssh-action@v1.0.3
         with:
@@ -24,7 +18,10 @@ jobs:
           username: ${{ secrets.SSH_USERNAME }}
           key: ${{ secrets.SSH_KEY }}
           script: |
-            docker pull cr.yandex/${{secrets.CR_ID}}/app:${{ github.event.inputs.version }}_latest
+            sudo groupadd docker
+            sudo usermod -aG docker ${USER}
+            docker login --username oauth --password ${{ secrets.YANDEX_OAUTH }} cr.yandex
+            docker pull cr.yandex/${{secrets.CR_ID}}/app:${{ inputs.version }}_latest
             docker kill $(docker ps -q)
             docker rm $(docker ps -a -q)
             docker run -d --restart unless-stopped -p 3000:3000 cr.yandex/${{secrets.CR_ID}}/app:${{ inputs.version }}_latest
