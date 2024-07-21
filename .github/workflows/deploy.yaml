@@ -18,11 +18,6 @@ jobs:
           username: ${{ secrets.SSH_USERNAME }}
           key: ${{ secrets.SSH_KEY }}
           script: |
-            if getent group docker; then
-              echo "docker group already exists"
-            else
-              sudo groupadd docker
-            fi
             sudo usermod -aG docker ${USER}
             docker login --username oauth --password ${{ secrets.YANDEX_OAUTH }} cr.yandex
             docker pull cr.yandex/${{secrets.CR_ID}}/app:${{ inputs.version }}_latest
