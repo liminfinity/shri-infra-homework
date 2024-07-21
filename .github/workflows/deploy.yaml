@@ -34,14 +34,11 @@ jobs:
     needs: [run_docker]
     runs-on: ubuntu-latest
     steps:
-      - name: Set current date
-        run: echo "NOW=$(date +'%Y-%m-%d')" >> $GITHUB_ENV
-
       - name: Create comment
         uses: peter-evans/create-or-update-comment@v4
         with:
           issue-number: ${{inputs.issue-number}}
           body: |
             **Deploy to production**:
-            - Date: ${{env.NOW}}
+            - Date: $(date)
             - Author: ${{ github.triggering_actor }}
