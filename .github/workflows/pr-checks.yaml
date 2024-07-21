@@ -1,0 +1,31 @@
+name: PR checks
+on:
+    pull_request:
+        types: [opened, synchronize, reopened]
+jobs:
+    run_checks:
+        runs-on: ubuntu-latest
+        strategy:
+            matrix:
+                check-name: [lint, test]
+                node-version: [20]
+        steps:
+            - name: Checkout
+              uses: actions/checkout@v4.1.7
+            - name: Setup Node.js environment
+              uses: actions/setup-node@v4.0.3
+              with:
+                node-version: '${{ matrix.node-version }}'
+            - name: Install dependencies
+              run: npm ci
+            - name: Run ${{ matrix.check-name }}
+              run: npm run ${{ matrix.check-name }}
+    cancel_merge:
+        runs-on: ubuntu-latest
+        needs: [run_checks]
+        steps:
+          - name: Cancel the merger if the checks fail
+            if: failure()
+            run: |
+                echo "Checks failed. Cancelling the merge."
+                exit 1

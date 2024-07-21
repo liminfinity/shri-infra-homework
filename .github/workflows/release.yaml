@@ -1,0 +1,114 @@
+name: Release
+on: workflow_dispatch
+jobs:
+  run_checks:
+    runs-on: ubuntu-latest
+    strategy:
+      matrix:
+        task: [lint, test]
+        node_version: [20]
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4.1.7
+      - name: Setup Node.js
+        uses: actions/setup-node@v4.0.3
+        with:
+          node-version: '${{ matrix.node_version }}'
+      - name: Install dependencies
+        run: npm ci
+      - name: Run ${{ matrix.task }}
+        run: npm run ${{ matrix.task }}
+  branch_creation:
+    runs-on: ubuntu-latest
+    needs: [run_checks]
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4.1.7
+      - name: Create release branch
+        run: git checkout -b release/${{ github.run_number }}
+      - name: Push release branch
+        run: git push origin release/${{ github.run_number }}
+  build_and_push_docker:
+    runs-on: ubuntu-latest
+    needs: [branch_creation]
+    steps:
+      - name: Checkout release branch
+        uses: actions/checkout@v4.1.7
+        with:
+          ref: release/${{ github.run_number }}
+      - name: Login to Yandex Container Registry
+        run: |
+            docker login \
+              --username oauth \
+              --password ${{ secrets.YANDEX_OAUTH }} \
+              cr.yandex
+      - name: Build and push Docker image
+        run: |
+          docker build -t cr.yandex/${{ secrets.CR_ID }}/app:${{ github.run_number }} .
+          docker push cr.yandex/${{ secrets.CR_ID }}/app:${{ github.run_number }}
+      - name: Build and push latest Docker image
+        run: |
+          docker build -t cr.yandex/${{ secrets.CR_ID }}/app:${{ github.run_number }}_latest .
+          docker push cr.yandex/${{ secrets.CR_ID }}/app:${{ github.run_number }}_latest
+  tagging_release:
+    runs-on: ubuntu-latest
+    needs: [branch_creation]
+    steps:
+      - name: Checkout release branch
+        uses: actions/checkout@v4.1.7
+        with:
+          ref: release/${{ github.run_number }}
+      - name: Create and push tag
+        uses: EndBug/latest-tag@latest
+        with: 
+          ref: ${{ github.run_number }}
+  issue_creation:
+    runs-on: ubuntu-latest
+    needs: [run_checks]
+    steps:
+      - name: Set current date
+        run: echo "NOW=$(date +'%Y-%m-%d')" >> $GITHUB_ENV
+      - name: Fetch all tags
+        run: git fetch --tags
+      - name: Get previous tag
+        id: prev_tag
+        run: echo "PREV_TAG=$(git describe --tags --abbrev=0 HEAD^)" >> $GITHUB_ENV
+      - name: Get commit list
+        id: commit_list
+        run: |
+          git log ${{ env.PREV_TAG }}..HEAD --oneline > commits.txt
+          echo "COMMITS=$(cat commits.txt)" >> $GITHUB_ENV
+      - name: Create release issue
+        uses: dacbd/create-issue-action@v2
+        with:
+          token: ${{ github.token }}
+          title: Release ${{ github.run_number }}
+          body: |
+            ## Release ${{ github.run_number }} Details:
+            
+            - Date: ${{ env.NOW }}
+            - Author: ${{ github.actor }}
+            - Version: ${{ github.run_number }}
+            - Commits: |
+              ${{ env.COMMITS }}
+            - Docker Image: cr.yandex/${{ secrets.CR_ID }}/app:${{ github.run_number }}
+  changelog_update:
+    runs-on: ubuntu-latest
+    needs: [branch_creation]
+    steps:
+      - name: Checkout release branch
+        uses: actions/checkout@v4.1.7
+        with:
+          ref: release/${{ github.run_number }}
+      - name: Update CHANGELOG.md
+        run: |
+          echo '${{ github.run_number }}' | cat - CHANGELOG.md > temp.md && mv temp.md CHANGELOG.md
+          git add CHANGELOG.md
+          git commit -m "Update CHANGELOG.md"
+          git push origin release/${{ github.run_number }}
+  
+      
+    
+      
+  
+          
