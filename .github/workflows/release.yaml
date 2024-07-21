@@ -78,7 +78,7 @@ jobs:
       - name: Create issue
         run: |
           touch $ISSUE
-          echo "**Release ${{ inputs.version }}**" >> $ISSUE
+          echo "**Release ${{ github.run_number }}**" >> $ISSUE
           echo "- Date: $(date)" >> $ISSUE
           echo "- Author: ${{ github.triggering_actor }}" >> $ISSUE
           echo "- Version: ${{ github.run_number }}" >> $ISSUE
