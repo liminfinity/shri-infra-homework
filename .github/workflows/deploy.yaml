@@ -27,7 +27,7 @@ jobs:
             docker pull cr.yandex/${{secrets.CR_ID}}/app:${{ github.event.inputs.version }}_latest
             docker kill $(docker ps -q)
             docker rm $(docker ps -a -q)
-            docker run -d --restart unless-stopped -p 3000:3000 cr.yandex/${{secrets.YC_REGISTRY_ID}}/app:${{ inputs.version }}_latest
+            docker run -d --restart unless-stopped -p 3000:3000 cr.yandex/${{secrets.CR_ID}}/app:${{ inputs.version }}_latest
   
   add_issue_comment:
     needs: [run_docker]
