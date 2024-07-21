@@ -44,7 +44,7 @@ jobs:
           echo "**Deploy to production**" >> $ISSUE
           echo "- Date: $(date)" >> $ISSUE
           echo "- Author: ${{ github.triggering_actor }}" >> $ISSUE
-          number=$(gh issue list --label "release_${{ github.event.inputs.release_version }}" --json number --jq '.[0].number')
+          number=$(gh issue list --label "release ${{ github.event.inputs.release_version }}" --json number --jq '.[0].number')
           gh issue comment "$number" --body-file "$ISSUE"
           rm $ISSUE
         env:
