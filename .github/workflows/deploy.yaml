@@ -6,10 +6,6 @@ on:
         type: string
         required: true
         description: "Version to release"
-      issue-number:
-        type: number
-        required: true
-        description: "Release Issue number id"
 
 jobs:
   run_docker:
@@ -34,11 +30,19 @@ jobs:
     needs: [run_docker]
     runs-on: ubuntu-latest
     steps:
-      - name: Create comment
-        uses: peter-evans/create-or-update-comment@v4
-        with:
-          issue-number: ${{inputs.issue-number}}
-          body: |
-            **Deploy to production**:
-            - Date: $(date)
-            - Author: ${{ github.triggering_actor }}
+      - name: Configure Git
+        run: |
+          git config --global user.email "${{ github.actor }}@users.noreply.github.com"
+          git config --global user.name "${{ github.actor }}"
+      - name: Add issue comment
+        run: |
+          touch $ISSUE
+          echo "**Deploy to production**" >> $ISSUE
+          echo "- Date: $(date)" >> $ISSUE
+          echo "- Author: ${{ github.triggering_actor }}" >> $ISSUE
+          number=$(gh issue list --label "Release ${{ github.event.inputs.release_version }}" --json number --jq '.[0].number')
+          gh issue comment "$number" --body-file "$ISSUE"
+          rm $ISSUE
+        env:
+          GH_TOKEN: ${{ github.token }}
+          ISSUE: issue.txt
