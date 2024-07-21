@@ -30,6 +30,10 @@ jobs:
     needs: [run_docker]
     runs-on: ubuntu-latest
     steps:
+      - name: Checkout release branch
+        uses: actions/checkout@v4.1.7
+        with:
+          ref: release/${{ inputs.version }}
       - name: Configure Git
         run: |
           git config --global user.email "${{ github.actor }}@users.noreply.github.com"
