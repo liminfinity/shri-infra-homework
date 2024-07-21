@@ -19,6 +19,7 @@ jobs:
           key: ${{ secrets.SSH_KEY }}
           script: |
             if getent group docker; then
+              echo "docker group already exists"
             else
               sudo groupadd docker
             fi
