@@ -78,6 +78,8 @@ jobs:
       - name: Create label
         run: |
           gh label create "release ${{ github.run_number }}"
+        env:
+          GH_TOKEN: ${{ github.token }}
       - name: Create issue
         run: |
           touch $ISSUE
